@@ -1,30 +1,36 @@
 # from father of image ubuntu: 16.04
-FROM ubuntu:16.04
+FROM ruby:2.5.1
 # author
-
-MAINTAINER DucNguyen<ducnp2020@gmail.com>
-
-DEBIAN_FRONTEND=noninteractive
+LABEL author.name='DucNguyen' \ 
+author.email='ducnp2020@gmail.com'
 
 # update ubuntu
-RUN apt-get update
+RUN apt-get update && \
+apt-get install -y nodejs nano vim
 
-#install nginx
+# set timezone for vitual machine
 
-RUN apt-get install -y nginx
+ENV TZ=Asia/Ho_Chi_Minh
+RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 
-#install mysql
+# chi định thư mục làm việc mặc định (Optional)
+ENV APP_PATH /my_app
 
-RUN echo "mysql-server mysql-server/root_password password root" | debconf-set-selections \ 
-&& echo "mysql-server mysql-server/root_password_again password root" | debconf-set-selections \
-&& apt-get install -y mysql-server
+WORKDIR $APP_PATH
 
-DIRWORK /venv
+COPY Gemfile Gemfile.lock $APP_PATH/
+RUN bundle install --without production --retry 2 \
+  --jobs `expr $(cat /proc/cpuinfo | grep -c "cpu cores") - 1`
 
-COPY start.sh /venv
+COPY . $APP_PATH
 
-RUN chmod a+x /venv/*
+# add script to be executed everytime the container start
 
-ENTRYPOINT ["/venv/start.sh"]
+COPY docker/entrypoint.sh /usr/bin/
+RUN chmod +x /usr/bin/entrypoint.sh
+ENTRYPOINT ["entrypoint.sh"]
+EXPOSE 3000
 
-EXPOSE 80
+
+# default run cmd
+CMD ["rails", "server", "-b", "0.0.0.0"]
