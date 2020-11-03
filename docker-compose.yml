@@ -1,5 +1,5 @@
-version: 3.5
-service: 
+version: '3.5'
+services: 
   mysql:
     image: mysql:5.7
     container_name: mysql
@@ -7,7 +7,7 @@ service:
     environment:
       MYSQL_ROOT_PASSWORD: root
     volumes: 
-      -docker/database:/var/lib/mysql
+      - ./docker/database:/var/lib/mysql
   app:
     container_name: app
     build: .
